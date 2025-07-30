@@ -7,6 +7,7 @@ interface bsyr_user {
     first_name: string;
     last_name: string;
     email: string;
+    password: string;
 }
 
 export function create_user_routes(mongo_client: MongoClient):Router {
