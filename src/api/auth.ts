@@ -49,7 +49,7 @@ function authenticate_user_or_fail(
       ilog(`${username_or_email} logged in successfully`);
 
       const payload = {
-        id: result._id,
+        id: result._id?.toString(),
         username: result.username,
         first_name: result.first_name,
         last_name: result.last_name,

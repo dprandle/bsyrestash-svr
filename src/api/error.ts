@@ -1,6 +1,11 @@
-import {Response} from "express"
+import { Response } from "express";
+
+interface err_response {
+  message: string;
+}
 
 export function send_status_error(status_code: number, err: Error | string, res: Response) {
-    elog(err);
-    res.status(status_code).json(err);
+  const errc: err_response = { message: typeof err === "string" ? err : err.message };
+  ilog(errc);
+  res.status(status_code).json(errc);
 }
