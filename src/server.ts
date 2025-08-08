@@ -1,9 +1,13 @@
 import express from "express";
 import path from "path";
 import dotenv from "dotenv";
+import cookie_parser from "cookie-parser";
+import { MongoClient } from "mongodb";
+dotenv.config();
+
+// Dotenv.config should be called before loading other modules or else the globals there won't be defined
 import { create_user_routes } from "./api/users";
 import { authenticate_jwt, create_auth_routes } from "./api/auth";
-import { MongoClient } from "mongodb";
 
 // Source map for tracing things back to typescript rather than generated javascript
 import "source-map-support/register";
@@ -35,7 +39,7 @@ async function start_server() {
   await mdb_client.connect();
   ilog("Connected to db");
   const app = express();
-
+  app.use(cookie_parser());
   // Set up a debug view of requests
   app.use((req: express.Request, _res: express.Response, next: express.NextFunction) => {
     dlog("Request URL:", req.url);
@@ -45,7 +49,7 @@ async function start_server() {
   app.use(express.static(path.join(__dirname, "..", "public")));
   app.use(express.json());
   app.use("/api", create_auth_routes(mdb_client));
-  app.use("/api/users", authenticate_jwt, create_user_routes(mdb_client));
+  app.use("/api/users", create_user_routes(mdb_client));
 
   // Send index.html for any route that has not been handled yet - express 5 requires the braces and the
   // word after the wildcard - before express 5 this would have have just been "*"
