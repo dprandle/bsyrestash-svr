@@ -2,6 +2,7 @@ import express from "express";
 import path from "path";
 import dotenv from "dotenv";
 import cookie_parser from "cookie-parser";
+import os from "os";
 import { MongoClient } from "mongodb";
 dotenv.config();
 
@@ -12,7 +13,7 @@ import { authenticate_jwt, create_auth_routes } from "./api/auth";
 // Source map for tracing things back to typescript rather than generated javascript
 import "source-map-support/register";
 
-// Extend our request type to have any additional members we need and create some aliases for console.log guys
+// Extend our request type to have any additional members we need and create some aliases for ilog guys
 declare global {
   var ilog: any;
   var dlog: any;
@@ -31,9 +32,24 @@ dotenv.config();
 
 // Create the mongodb client
 const mdb_uri = process.env.MONGODB_URI!;
+const port = process.env.PORT!;
+asrt(port);
 asrt(mdb_uri);
 
 const mdb_client = new MongoClient(mdb_uri);
+
+function get_local_ip() {
+  const nets = os.networkInterfaces();
+  for (const name of Object.keys(nets)) {
+    for (const net of nets[name]!) {
+      // Skip over internal (i.e., 127.0.0.1) and non-IPv4 addresses
+      if (net.family === "IPv4" && !net.internal) {
+        return net.address;
+      }
+    }
+  }
+  return "localhost";
+}
 
 async function start_server() {
   await mdb_client.connect();
@@ -57,8 +73,17 @@ async function start_server() {
     res.sendFile(path.join(__dirname, "..", "public", "index.html"));
   });
 
-  app.listen(process.env.PORT, () => {
-    return ilog(`Express is listening at http://localhost:${process.env.PORT}`);
+  // Handle 404s
+  app.listen(port, (err?: Error) => {
+    if (err) {
+      elog("Server failed to start:", err);
+      return;
+    }
+
+    const local_ip = get_local_ip();
+    ilog(`Server listening at:`);
+    ilog(`- Local:   http://localhost:${port}`);
+    ilog(`- Network: http://${local_ip}:${port}`);
   });
 }
 
